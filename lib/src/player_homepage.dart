@@ -17,14 +17,13 @@ class NFBuildPlayer extends StatelessWidget {
           playlistJson: playlistJson, initialVideoIndex: initialVideoIndex),
       child: Builder(builder: (context) {
         return SafeArea(
-          child: Scaffold(
-            body: BlocBuilder<NFPlayerBloc, NFPlayerState>(
-                builder: (context, state) => state as Widget),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
-            floatingActionButton: PIPPlayer(),
-          ),
-        );
+            child: Scaffold(
+          body: BlocBuilder<NFPlayerBloc, NFPlayerState>(
+              builder: (context, state) => state as Widget),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: PIPPlayer(),
+        ));
       }),
     );
   }

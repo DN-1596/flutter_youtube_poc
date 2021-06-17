@@ -8,6 +8,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
   ValueNotifier<Video> pipVideo = ValueNotifier(null);
+  ValueNotifier<bool> isFullScreen = ValueNotifier(false);
   List<Video> playlist;
   final List<dynamic> playlistJson;
   final int initialVideoIndex;
@@ -37,10 +38,6 @@ class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
     if (event is PlayVideo) {
       loadVideo(event.index);
       yield MainVideoPlayerState(event.index);
-    }
-    if (event is GetFullScreenVideoPlayer) {
-      loadVideo(event.index);
-      yield FullScreenVideoPlayerState(event.index);
     }
   }
 

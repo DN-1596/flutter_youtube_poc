@@ -37,6 +37,14 @@ class _MainVideoPlayerStateState extends State<MainVideoPlayerState> {
   Widget build(BuildContext context) {
     return YoutubePlayerBuilder(
         key: kGlobalObjectKey,
+        onExitFullScreen: () {
+          BlocProvider.of<NFPlayerBloc>(context).isFullScreen.value = false;
+          this.setState(() {});
+        },
+        onEnterFullScreen: () {
+          BlocProvider.of<NFPlayerBloc>(context).isFullScreen.value = true;
+          this.setState(() {});
+        },
         player: YoutubePlayer(
           aspectRatio: 16 / 9,
           controller: controller,
@@ -46,24 +54,26 @@ class _MainVideoPlayerStateState extends State<MainVideoPlayerState> {
             BlocProvider.of<NFPlayerBloc>(context)
                 .getNextVideoForPlayer(widget.videoIndex);
           },
-          topActions: <Widget>[
-            Container(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_drop_down_sharp,
-                  color: Colors.white,
-                  size: 30.0,
-                ),
-                onPressed: () {
-                  BlocProvider.of<NFPlayerBloc>(context)
-                      .loadPIP(widget.videoIndex);
-                  BlocProvider.of<NFPlayerBloc>(context)
-                      .add(GetVideoList(initialScrollIndex: widget.videoIndex));
-                },
-              ),
-            ),
-          ],
+          topActions: (controller.value.isFullScreen)
+              ? null
+              : <Widget>[
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_drop_down_sharp,
+                        color: Colors.white,
+                        size: 30.0,
+                      ),
+                      onPressed: () {
+                        BlocProvider.of<NFPlayerBloc>(context)
+                            .loadPIP(widget.videoIndex);
+                        BlocProvider.of<NFPlayerBloc>(context).add(GetVideoList(
+                            initialScrollIndex: widget.videoIndex));
+                      },
+                    ),
+                  ),
+                ],
           bottomActions: [
             CurrentPosition(),
             ProgressBar(
@@ -75,12 +85,15 @@ class _MainVideoPlayerStateState extends State<MainVideoPlayerState> {
               isExpanded: true,
             ),
             RemainingDuration(),
-            IconButton(
+            FullScreenButton(
+              controller: controller,
+            ),
+/*            IconButton(
                 icon: Icon(Icons.fullscreen),
                 onPressed: () async {
                   BlocProvider.of<NFPlayerBloc>(context)
                       .add(GetFullScreenVideoPlayer(widget.videoIndex));
-                })
+                })*/
           ],
         ),
         builder: (context, player) => ListView(
