@@ -4,6 +4,7 @@ import 'package:flutter_youtube_poc/src/model/video_model.dart';
 import 'package:flutter_youtube_poc/src/player_bloc/index.dart';
 import 'package:flutter_youtube_poc/src/player_bloc/player_bloc.dart';
 import 'package:flutter_youtube_poc/src/player_states/index.dart';
+import 'package:flutter_youtube_poc/src/services/constants.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class MainVideoPlayerState extends StatefulWidget implements NFPlayerState {
@@ -35,7 +36,7 @@ class _MainVideoPlayerStateState extends State<MainVideoPlayerState> {
   @override
   Widget build(BuildContext context) {
     return YoutubePlayerBuilder(
-        key: ObjectKey(controller),
+        key: kGlobalObjectKey,
         player: YoutubePlayer(
           aspectRatio: 16 / 9,
           controller: controller,

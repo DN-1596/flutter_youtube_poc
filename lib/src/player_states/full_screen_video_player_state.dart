@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_youtube_poc/src/player_bloc/index.dart';
 import 'package:flutter_youtube_poc/src/player_states/index.dart';
+import 'package:flutter_youtube_poc/src/services/constants.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class FullScreenVideoPlayerState extends StatefulWidget
@@ -38,7 +39,7 @@ class _FullScreenVideoPlayerStateState
   @override
   Widget build(BuildContext context) {
     return YoutubePlayerBuilder(
-      key: ObjectKey(controller),
+      key: kGlobalObjectKey,
       player: YoutubePlayer(
         controller: controller,
         aspectRatio: 16 / 9,

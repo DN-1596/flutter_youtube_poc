@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+const kGlobalObjectKey = ObjectKey("MAIN PLAYER");
+
 const List<String> videoIds2 = [
   "TPfIpjl3oZ4",
   "OHm9ucEY5gs",

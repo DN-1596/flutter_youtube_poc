@@ -46,6 +46,8 @@ class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
 
   /// initiate player time trackers for the current session to 0 seconds, in the future these times can be obtained from the JSON as well
   Stream<NFPlayerState> initiatePlayer() async* {
+    await Future.delayed(Duration(seconds: 5));
+
     this.playlist = PlayerUtils.getPlaylist(playlistJson);
 
     playlist?.forEach((element) {
