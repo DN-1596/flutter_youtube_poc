@@ -25,6 +25,7 @@ dependencies:
     sdk: flutter
 
   youtube_player_flutter:
+    path: youtube_player_flutter
   http:
   scrollable_positioned_list: ^0.1.10
   flutter_bloc: ^6.1.2

@@ -257,9 +257,9 @@ packages:
   youtube_player_flutter:
     dependency: "direct main"
     description:
-      name: youtube_player_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: youtube_player_flutter
+      relative: true
+    source: path
     version: "7.0.0+7"
 sdks:
   dart: ">=2.10.0-110 <2.11.0"
