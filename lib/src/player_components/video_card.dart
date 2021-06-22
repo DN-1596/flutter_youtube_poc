@@ -49,7 +49,7 @@ class _VideoCardState extends State<VideoCard> {
       onTap: (video != null)
           ? () {
               BlocProvider.of<NFPlayerBloc>(context)
-                  .add(PlayVideo(widget.videoIndex));
+                  .loadVideo(widget.videoIndex);
             }
           : null,
       child: Column(

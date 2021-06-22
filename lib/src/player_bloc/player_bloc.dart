@@ -2,50 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_youtube_poc/src/model/video_model.dart';
 import 'package:flutter_youtube_poc/src/player_bloc/index.dart';
+import 'package:flutter_youtube_poc/src/player_components/index.dart';
+import 'package:flutter_youtube_poc/src/player_components/nf_youtube_player.dart';
 import 'package:flutter_youtube_poc/src/player_states/index.dart';
 import 'package:flutter_youtube_poc/src/player_utilities.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
+enum VideoFeedState { pip, fullScreen, description }
+
 class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
-  ValueNotifier<Video> pipVideo = ValueNotifier(null);
-  ValueNotifier<bool> isFullScreen = ValueNotifier(false);
+  /// The actual [YoutubePlayer].
+  NFYoutubePlayer nfYoutubePlayer;
+
+  /// VideoFeed , current index from the playlist
+  ValueNotifier<int> vfIndex = ValueNotifier(null);
+
+  /// VideoFeedState
+  ValueNotifier<VideoFeedState> vfState = ValueNotifier(null);
+
   List<Video> playlist;
   final List<dynamic> playlistJson;
   final int initialVideoIndex;
+  final bool isInitialPIP;
+  final bool isInitialFullScreen;
   YoutubePlayerController playerController;
-  YoutubePlayerController pipController;
 
   /// tracks time played per video in seconds
   Map<String, int> playTracker = new Map();
 
-  static final List<NFPlayerEvent> _events = new List<NFPlayerEvent>();
-
-  NFPlayerBloc({@required this.playlistJson, this.initialVideoIndex})
+  NFPlayerBloc(
+      {@required this.playlistJson,
+      this.initialVideoIndex,
+      this.isInitialFullScreen = false,
+      this.isInitialPIP = false})
       : super(LoadingState()) {
     this.add(InitiatePlayer());
   }
 
   @override
   Stream<NFPlayerState> mapEventToState(NFPlayerEvent event) async* {
-    _events.add(event);
-
     if (event is InitiatePlayer) {
       yield* initiatePlayer();
     }
     if (event is GetVideoList) {
       yield* getVideoList(event.initialScrollIndex);
     }
-    if (event is PlayVideo) {
-      loadVideo(event.index);
-      yield MainVideoPlayerState(event.index);
-    }
   }
 
-  /// initiate player time trackers for the current session to 0 seconds, in the future these times can be obtained from the JSON as well
+  /// initiate player time trackers for the current session to 0 seconds,
+  /// in the future these times can be obtained from the JSON as well
   Stream<NFPlayerState> initiatePlayer() async* {
-    await Future.delayed(Duration(seconds: 5));
-
     this.playlist = PlayerUtils.getPlaylist(playlistJson);
+    nfYoutubePlayer = NFYoutubePlayer();
 
     playlist?.forEach((element) {
       playTracker[element.id] = 0;
@@ -53,16 +61,17 @@ class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
 
     int _initialVideoIndex = initialVideoIndex ?? -1;
     if (_initialVideoIndex > -1 && _initialVideoIndex < playlist.length) {
-      yield* loadVideo(_initialVideoIndex);
-    } else {
-      yield VideoListState(
-        autoPlayIndex: 0,
-      );
+      loadVideo(_initialVideoIndex,
+          isFullScreen: isInitialFullScreen, isPIP: isInitialPIP);
     }
+    yield VideoListState(
+      autoPlayIndex: 0,
+    );
   }
 
+  /// Controls video list state --
+
   Stream<NFPlayerState> getVideoList([int initialScrollIndex = 0]) async* {
-    if (playerController?.value?.isPlaying ?? false) playerController.pause();
     yield VideoListState(
       initialScrollIndex: initialScrollIndex,
     );
@@ -70,21 +79,33 @@ class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
 
   /// MAIN PLAYER METHOD CALLS --
 
-  loadVideo(int index) {
-    if (playerController == null) {
-      initiatePlayerController(index);
+  /// Call this method to Load a video in video feed
+  loadVideo(int index, {isFullScreen = false, isPIP = false}) {
+    initiatePlayerController(
+        playlist[index].id, playTracker[playlist[index].id]);
+
+    if (isFullScreen) {
+      playerController.toggleFullScreenMode();
+      vfState.value = VideoFeedState.fullScreen;
+    } else if (isPIP) {
+      vfState.value = VideoFeedState.pip;
     } else {
-      initiatePlayerController(index, playTracker[playlist[index].id]);
+      vfState.value = VideoFeedState.description;
     }
-    cancelPIP();
+    vfIndex.value = index;
   }
 
-  initiatePlayerController([int index = 0, int startAt = 0]) {
-    playerController = YoutubePlayerController(
-      initialVideoId: playlist[index].id,
-      flags: YoutubePlayerFlags(mute: false, autoPlay: true, startAt: startAt),
-    );
-    playerController.addListener(playerControllerListener);
+  initiatePlayerController([String videoId = "", int startAt = 0]) {
+    if (playerController == null) {
+      playerController = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags:
+            YoutubePlayerFlags(mute: false, autoPlay: true, startAt: startAt),
+      );
+      playerController.addListener(playerControllerListener);
+    } else {
+      playerController.load(videoId);
+    }
   }
 
   playerControllerListener() {
@@ -92,62 +113,25 @@ class NFPlayerBloc extends Bloc<NFPlayerEvent, NFPlayerState> {
         playerController.value.position.inSeconds;
   }
 
-  /// PIP METHOD CALLS --
-
-  loadPIP(int index) {
-    if (pipController == null) {
-      initiatePIPController(index);
-    } else {
-      initiatePIPController(index, playTracker[playlist[index].id]);
-    }
-    pipVideo.value = playlist[index];
-  }
-
-  initiatePIPController(int index, [int startAt = 0]) {
-    pipController = YoutubePlayerController(
-      initialVideoId: playlist[index].id,
-      flags: YoutubePlayerFlags(mute: false, autoPlay: true, startAt: startAt),
-    );
-    pipController.addListener(pipControllerListener);
-  }
-
-  pipControllerListener() {
-    playTracker[pipController.metadata.videoId] =
-        pipController.value.position.inSeconds;
-  }
-
-  cancelPIP() {
-    pipVideo.value = null;
-  }
-
-  /// FULL SCREEN METHOD CALLS ---
-
-  dispatchPreviousState() {
-    // Removes the current event from the stack
-    _events.removeLast();
-    // Dispatched the previous event
-    this.add(_events.removeLast());
+  cancelVideo() {
+    playerController.pause();
+    playerController.removeListener(playerControllerListener);
+    playerController = null;
+    vfIndex.value = null;
   }
 
   /// CUE METHOD CALLS ---
 
-  getNextVideoForPlayer(int currIndex) {
+  getNextVideoForPlayer() {
+    int currIndex = vfIndex.value;
     int totalVideo = playlist.length;
     int nextIndex = currIndex + 1;
+    VideoFeedState currState = vfState.value;
 
     if (nextIndex < totalVideo) {
-      this.add(PlayVideo(nextIndex));
-    } else {
-      playerController.pause();
-    }
-  }
-
-  getNextVideoForFullScreenPlayer(int currIndex) {
-    int totalVideo = playlist.length;
-    int nextIndex = currIndex + 1;
-
-    if (nextIndex < totalVideo) {
-      this.add(GetFullScreenVideoPlayer(nextIndex));
+      loadVideo(nextIndex,
+          isFullScreen: currState == VideoFeedState.fullScreen,
+          isPIP: currState == VideoFeedState.pip);
     } else {
       playerController.pause();
     }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-const kGlobalObjectKey = ObjectKey("MAIN PLAYER");
+GlobalKey kPlayerKey;
+
+const Duration kAnimationDuration = Duration(milliseconds: 300);
 
 const List<String> videoIds2 = [
   "TPfIpjl3oZ4",

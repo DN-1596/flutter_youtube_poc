@@ -55,80 +55,16 @@ class _VideoListStateState extends State<VideoListState> {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubePlayerBuilder(
-        key: ObjectKey(controller ?? "KEY"),
-        onExitFullScreen: () {
-          BlocProvider.of<NFPlayerBloc>(context).isFullScreen.value = false;
-        },
-        onEnterFullScreen: () {
-          BlocProvider.of<NFPlayerBloc>(context).isFullScreen.value = true;
-        },
-        player: YoutubePlayer(
-          aspectRatio: 16 / 9,
-          controller: controller,
-          actionsPadding: const EdgeInsets.all(8.0),
-          topActions: <Widget>[
-            Flexible(flex: 90, fit: FlexFit.tight, child: SizedBox()),
-            Flexible(
-              flex: 10,
-              fit: FlexFit.tight,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.picture_in_picture_alt,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                onPressed: () {
-                  controller.pause();
-                  BlocProvider.of<NFPlayerBloc>(context)
-                      .loadPIP(_autoPlayIndex);
-                },
-              ),
-            ),
-          ],
-          bottomActions: [
-            CurrentPosition(),
-            ProgressBar(
-              colors: ProgressBarColors(
-                backgroundColor: Theme.of(context).backgroundColor,
-                playedColor: Theme.of(context).primaryColor,
-                bufferedColor: Theme.of(context).hintColor,
-              ),
-              isExpanded: true,
-            ),
-            RemainingDuration(),
-            IconButton(
-                icon: (isMute)
-                    ? Icon(Icons.volume_off_sharp)
-                    : Icon(Icons.volume_up_sharp),
-                onPressed: () async {
-                  (isMute && controller.value.isPlaying)
-                      ? controller.unMute()
-                      : controller.mute();
-
-                  setState(() {
-                    isMute = !isMute;
-                  });
-                }),
-            FullScreenButton(
-              controller: controller,
-            ),
-          ],
-        ),
-        builder: (context, player) => ScrollablePositionedList.builder(
-            itemPositionsListener: itemPositionsListener,
-            itemScrollController: itemScrollController,
-            itemCount: videoList.length,
-            initialScrollIndex: widget.initialScrollIndex,
-            itemBuilder: (context, index) {
-              if (index == _autoPlayIndex) {
-                return playableTile(context, player);
-              }
-
-              return VideoCard(
-                index,
-              );
-            }));
+    return ScrollablePositionedList.builder(
+        itemPositionsListener: itemPositionsListener,
+        itemScrollController: itemScrollController,
+        itemCount: videoList.length,
+        initialScrollIndex: widget.initialScrollIndex,
+        itemBuilder: (context, index) {
+          return VideoCard(
+            index,
+          );
+        });
   }
 
   Widget playableTile(BuildContext context, Widget player) {
@@ -154,7 +90,7 @@ class _VideoListStateState extends State<VideoListState> {
                       ? () {
                           controller.pause();
                           BlocProvider.of<NFPlayerBloc>(context)
-                              .add(PlayVideo(_autoPlayIndex));
+                              .loadVideo(_autoPlayIndex);
                         }
                       : null,
                 )
